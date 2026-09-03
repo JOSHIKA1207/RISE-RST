@@ -1,0 +1,29 @@
+[
+  {
+    "source": "incident",
+    "record_id": "INC-201",
+    "timestamp": "2026-09-03T17:45:00+05:30",
+    "summary": "Authentication API latency increased",
+    "status": "investigating",
+    "severity": "high",
+    "owner": "backend-team"
+  },
+  {
+    "source": "incident",
+    "record_id": "INC-202",
+    "timestamp": "2026-09-03T19:10:00+05:30",
+    "summary": "Database connection pool nearing limit",
+    "status": "watch",
+    "severity": "medium",
+    "owner": "platform-team"
+  },
+  {
+    "source": "incident",
+    "record_id": "INC-203",
+    "timestamp": "2026-09-03T16:20:00+05:30",
+    "summary": "Old incident before shift",
+    "status": "resolved",
+    "severity": "low",
+    "owner": "platform-team"
+  }
+]

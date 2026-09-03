@@ -1,0 +1,38 @@
+[
+  {
+    "source": "ticketing",
+    "record_id": "OPS-1001",
+    "timestamp": "2026-09-03T17:15:00+05:30",
+    "summary": "Password reset issue reported by customer",
+    "status": "open",
+    "severity": "medium",
+    "owner": "support-team"
+  },
+  {
+    "source": "ticketing",
+    "record_id": "OPS-1001",
+    "timestamp": "2026-09-03T18:20:00+05:30",
+    "summary": "Password reset issue resolved",
+    "status": "resolved",
+    "severity": "medium",
+    "owner": "support-team"
+  },
+  {
+    "source": "ticketing",
+    "record_id": "OPS-1002",
+    "timestamp": "2026-09-03T18:35:00+05:30",
+    "summary": "Mobile login failures reported",
+    "status": "escalated",
+    "severity": "critical",
+    "owner": null
+  },
+  {
+    "source": "ticketing",
+    "record_id": "OPS-1003",
+    "timestamp": "2026-09-03T20:15:00+05:30",
+    "summary": "Event outside shift window",
+    "status": "open",
+    "severity": "low",
+    "owner": "support-team"
+  }
+]
