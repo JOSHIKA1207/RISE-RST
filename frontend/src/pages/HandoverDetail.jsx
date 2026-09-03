@@ -1,312 +1,403 @@
-import React, { useState } from 'react';
-import { useOutletContext, useParams } from 'react-router-dom';
-import { HandoverSection } from '../components/handover/HandoverSection';
-import { TraceabilityCard } from '../components/handover/TraceabilityCard';
-import { Modal } from '../components/common/Modal';
-import { StatusBadge } from '../components/common/StatusBadge';
-import { SourceBadge } from '../components/common/SourceBadge';
-import { rawActivities, currentShift } from '../data/mockData';
-import { filterShiftActivities } from '../utils/activityFilter';
-import { generateHandover } from '../utils/handoverGenerator';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Printer,
+  ArrowLeft,
   Download,
-  Send,
-  Edit,
   CheckCircle2,
+  Clock3,
   AlertTriangle,
-  ShieldAlert,
-  Eye
+  Eye,
+  Database,
+  ShieldCheck
 } from 'lucide-react';
 
+import { getPdfUrl } from '../services/api';
+
+
 export function HandoverDetail() {
-  const { id } = useParams();
-  const { setToast } = useOutletContext() || {};
+  const navigate = useNavigate();
 
-  const [handoverStatus, setHandoverStatus] = useState("READY FOR REVIEW");
-  const [inspectedItem, setInspectedItem] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const stored =
+    localStorage.getItem('generatedHandover');
 
-  const shiftActivities = filterShiftActivities({
-    activities: rawActivities,
-    shiftDate: "2026-09-03",
-    startTime: "09:00 AM",
-    endTime: "05:00 PM"
-  });
+  const handover =
+    stored ? JSON.parse(stored) : null;
 
-  const handoverDoc = generateHandover(shiftActivities, {
-    date: currentShift.displayDate,
-    startTime: currentShift.startTime,
-    endTime: currentShift.endTime,
-    timezone: currentShift.timezone,
-    user: "Shift Handover System (Arun Kumar)"
-  });
 
-  const { meta, summary, sections } = handoverDoc;
+  if (!handover) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-black text-white">
+          No Handover Generated
+        </h1>
 
-  const handleSendHandover = () => {
-    setHandoverStatus("SENT");
-    if (setToast) {
-      setToast({
-        type: "success",
-        title: "Handover Sent Successfully!",
-        message: "Shift handover document dispatched to #ops-shift-handover & incoming shift lead."
-      });
-    }
+        <p className="text-sm text-slate-400">
+          Generate a handover first.
+        </p>
+
+        <button
+          onClick={() =>
+            navigate('/generate')
+          }
+          className="px-4 py-2 bg-white text-black rounded-xl font-bold"
+        >
+          Generate Handover
+        </button>
+      </div>
+    );
+  }
+
+
+  const sections =
+    handover.sections || {};
+
+  const metrics =
+    handover.metrics || {};
+
+
+  const renderSection = (
+    title,
+    items,
+    Icon
+  ) => {
+    const safeItems = items || [];
+
+    return (
+      <div className="bg-[#12141e] border border-slate-800 rounded-2xl p-6 shadow-xl">
+
+        <div className="flex items-center justify-between mb-5">
+
+          <div className="flex items-center gap-3">
+
+            <Icon className="w-5 h-5 text-slate-300" />
+
+            <h2 className="text-lg font-black text-white">
+              {title}
+            </h2>
+
+          </div>
+
+          <span className="px-3 py-1 text-xs font-bold rounded-full bg-slate-800 text-slate-300">
+            {safeItems.length}
+          </span>
+
+        </div>
+
+
+        {safeItems.length === 0 ? (
+
+          <div className="p-5 border border-dashed border-slate-800 rounded-xl text-center">
+
+            <p className="text-sm text-slate-500">
+              Nothing to report
+            </p>
+
+          </div>
+
+        ) : (
+
+          <div className="space-y-3">
+
+            {safeItems.map((item, index) => (
+
+              <div
+                key={`${item.source}-${item.record_id}-${index}`}
+                className="bg-[#0d0e14] border border-slate-800 rounded-xl p-4"
+              >
+
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+
+                  <div className="min-w-0">
+
+                    <div className="flex items-center gap-2 flex-wrap">
+
+                      <span className="font-mono text-xs font-bold text-white bg-slate-800 px-2 py-1 rounded">
+                        {item.record_id}
+                      </span>
+
+                      <span className="text-xs px-2 py-1 bg-slate-900 text-slate-300 rounded border border-slate-800">
+                        {item.source}
+                      </span>
+
+                      {item.status && (
+                        <span className="text-xs text-slate-400">
+                          {item.status}
+                        </span>
+                      )}
+
+                    </div>
+
+
+                    <h3 className="text-sm font-bold text-white mt-3">
+                      {item.summary}
+                    </h3>
+
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+
+                      <p className="text-xs text-slate-400">
+                        Timestamp:
+                        {' '}
+                        <span className="text-slate-300">
+                          {item.timestamp}
+                        </span>
+                      </p>
+
+                      <p className="text-xs text-slate-400">
+                        Owner:
+                        {' '}
+                        <span className="text-slate-300">
+                          {item.owner || 'Unassigned'}
+                        </span>
+                      </p>
+
+                      <p className="text-xs text-slate-400">
+                        Severity:
+                        {' '}
+                        <span className="text-slate-300">
+                          {item.severity || 'N/A'}
+                        </span>
+                      </p>
+
+                      <p className="text-xs text-slate-400">
+                        Reference:
+                        {' '}
+                        <span className="font-mono text-slate-300">
+                          {item.source_reference}
+                        </span>
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="shrink-0 text-left md:text-right">
+
+                    <p className="text-xs text-slate-500">
+                      Risk
+                    </p>
+
+                    <p className="text-sm font-black text-white uppercase">
+                      {item.risk_level || 'low'}
+                    </p>
+
+                    <p className="text-xs text-slate-500">
+                      Score {item.risk_score ?? 0}
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        )}
+
+      </div>
+    );
   };
 
-  const handleExportPDF = () => {
-    window.print();
+
+  const handleDownload = () => {
+    window.open(
+      getPdfUrl(),
+      '_blank'
+    );
   };
 
-  const handleExportDOCX = () => {
-    const textContent = `
-SHIFT HANDOVER DOCUMENT
-Date: ${meta.date} (${meta.startTime} - ${meta.endTime})
-Generated At: ${meta.generatedAt}
-Generated By: ${meta.generatedBy}
-Status: ${handoverStatus}
-
-SUMMARY STATS:
-Total Activities: ${summary.totalActivities}
-Completed Work: ${summary.completedCount}
-Open Items: ${summary.openCount}
-Blockers: ${summary.blockersCount}
-Watch Items: ${summary.watchCount}
-    `;
-
-    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Shift_Handover_${meta.date.replace(/ /g, '_')}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    if (setToast) {
-      setToast({
-        type: "info",
-        title: "Export Completed",
-        message: "Handover document exported formatted text file."
-      });
-    }
-  };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Top Document Action Bar */}
-      <div className="bg-[#12141e] rounded-2xl border border-slate-800/90 p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 no-print">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 text-[11px] font-bold uppercase rounded-md bg-slate-800 text-slate-200 border border-slate-700">
-              Shift Handover Document
-            </span>
-            <StatusBadge status={handoverStatus} />
-          </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">
-            SHIFT HANDOVER — {meta.date}
+    <div className="space-y-7 animate-in fade-in duration-300">
+
+      {/* HEADER */}
+
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+
+        <div>
+
+          <button
+            onClick={() =>
+              navigate(-1)
+            }
+            className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white mb-3"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+
+
+          <h1 className="text-2xl font-black text-white">
+            Generated Shift Handover
           </h1>
-          <p className="text-xs text-slate-400 flex items-center gap-3">
-            <span>Shift: {meta.startTime} – {meta.endTime} ({meta.timezone})</span>
-            <span>•</span>
-            <span>Generated: {meta.generatedAt}</span>
+
+
+          <p className="text-sm text-slate-400 mt-1">
+            {handover.shift?.start}
+            {' '}
+            →
+            {' '}
+            {handover.shift?.end}
           </p>
+
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-colors inline-flex items-center gap-1.5"
-          >
-            <Edit className="w-3.5 h-3.5" />
-            <span>{isEditing ? "View Mode" : "Edit"}</span>
-          </button>
 
-          <button
-            onClick={handleExportPDF}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-colors inline-flex items-center gap-1.5"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Export PDF</span>
-          </button>
+        <button
+          onClick={handleDownload}
+          className="px-5 py-3 bg-white hover:bg-slate-200 text-black rounded-xl text-sm font-black flex items-center justify-center gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Download PDF
+        </button>
 
-          <button
-            onClick={handleExportDOCX}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-colors inline-flex items-center gap-1.5"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export DOCX</span>
-          </button>
-
-          <button
-            onClick={handleSendHandover}
-            disabled={handoverStatus === "SENT"}
-            className="px-4 py-2 bg-gradient-to-r from-slate-100 via-slate-300 to-slate-200 hover:from-white hover:to-slate-300 text-slate-950 font-extrabold text-xs rounded-xl transition-all shadow-md inline-flex items-center gap-1.5"
-          >
-            <Send className="w-3.5 h-3.5" />
-            <span>{handoverStatus === "SENT" ? "Handover Sent ✓" : "Send Handover"}</span>
-          </button>
-        </div>
       </div>
 
-      {/* Main Document Layout Sheet */}
-      <div className="bg-[#12141e] rounded-2xl border border-slate-800/90 p-8 shadow-xl space-y-8 print:bg-white print:text-black">
-        {/* Printable Document Header */}
-        <div className="border-b border-slate-800 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-1">
-              ShiftFlow Enterprise Handover System
-            </div>
-            <h2 className="text-2xl font-black text-white uppercase tracking-tight">SHIFT HANDOVER</h2>
-            <div className="text-sm font-bold text-slate-300 mt-1">
-              {meta.date} &nbsp;|&nbsp; {meta.startTime} – {meta.endTime} ({meta.timezone})
-            </div>
-          </div>
 
-          <div className="text-right text-xs text-slate-400 space-y-1">
-            <div><strong>Generated:</strong> {meta.generatedAt}</div>
-            <div><strong>Generated by:</strong> {meta.generatedBy}</div>
-            <div className="pt-1">
-              <strong>Status:</strong> <StatusBadge status={handoverStatus} size="sm" />
-            </div>
-          </div>
-        </div>
+      {/* METRICS */}
 
-        {/* Executive Summary Metrics Pill Box */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-[#0d0e14] rounded-xl border border-slate-800">
-          <div>
-            <span className="text-[11px] font-bold uppercase text-slate-400">Total Activities</span>
-            <span className="block text-xl font-black text-white">{summary.totalActivities}</span>
-          </div>
-          <div>
-            <span className="text-[11px] font-bold uppercase text-slate-400">Completed Work</span>
-            <span className="block text-xl font-black text-emerald-400">{summary.completedCount}</span>
-          </div>
-          <div>
-            <span className="text-[11px] font-bold uppercase text-slate-400">Open Items</span>
-            <span className="block text-xl font-black text-sky-400">{summary.openCount}</span>
-          </div>
-          <div>
-            <span className="text-[11px] font-bold uppercase text-slate-400">Blockers / Watch</span>
-            <span className="block text-xl font-black text-rose-400">{summary.blockersCount + summary.watchCount}</span>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-        {/* SECTION 1: COMPLETED WORK */}
-        <HandoverSection
-          title="1. Completed Work"
-          icon={CheckCircle2}
-          type="completed"
-          items={sections.completedWork}
-          onInspectItem={(item) => setInspectedItem(item)}
+        <MetricCard
+          title="Events Scanned"
+          value={metrics.events_scanned ?? 0}
         />
 
-        {/* SECTION 2: OPEN ITEMS */}
-        <HandoverSection
-          title="2. Open Items"
-          icon={AlertTriangle}
-          type="open"
-          items={sections.openItems}
-          onInspectItem={(item) => setInspectedItem(item)}
+        <MetricCard
+          title="In Shift Window"
+          value={metrics.events_in_window ?? 0}
         />
 
-        {/* SECTION 3: BLOCKERS */}
-        <HandoverSection
-          title="3. Blockers"
-          icon={ShieldAlert}
-          type="blocker"
-          items={sections.blockers}
-          onInspectItem={(item) => setInspectedItem(item)}
+        <MetricCard
+          title="Unique Records"
+          value={metrics.unique_records ?? 0}
         />
 
-        {/* SECTION 4: WATCH FOR NEXT SHIFT */}
-        <HandoverSection
-          title="4. Watch for Next Shift"
-          icon={Eye}
-          type="watch"
-          items={sections.watchItems}
-          onInspectItem={(item) => setInspectedItem(item)}
+        <MetricCard
+          title="Duplicates Removed"
+          value={metrics.duplicates_removed ?? 0}
         />
 
-        {/* SECTION 5: SOURCE ACTIVITY SUMMARY TABLE */}
-        <div className="bg-[#12141e] rounded-2xl border border-slate-800/90 p-6 shadow-xl space-y-4">
-          <h3 className="text-base font-bold text-white">5. Source Activity Summary</h3>
-          <p className="text-xs text-slate-400">Breakdown of captured activities by source platform.</p>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-[#0d0e14] border-b border-slate-800 font-bold uppercase text-slate-400">
-                  <th className="py-2.5 px-4">Source</th>
-                  <th className="py-2.5 px-4">Activities Found</th>
-                  <th className="py-2.5 px-4">Completed</th>
-                  <th className="py-2.5 px-4">Open</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/80">
-                {sections.sourceSummaryTable.map((row) => (
-                  <tr key={row.source} className="hover:bg-[#161824]">
-                    <td className="py-3 px-4 font-bold text-white">
-                      <SourceBadge source={row.source} size="sm" />
-                    </td>
-                    <td className="py-3 px-4 font-mono font-bold text-slate-200">{row.activities}</td>
-                    <td className="py-3 px-4 font-mono font-bold text-emerald-400">{row.completed}</td>
-                    <td className="py-3 px-4 font-mono font-bold text-sky-400">{row.open}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* SECTION 6: TRACEABILITY MATRIX */}
-        <TraceabilityCard
-          items={sections.traceabilityList}
-          onInspectItem={(item) => setInspectedItem(item)}
-        />
       </div>
 
-      {/* Inspect Item Reference Modal */}
-      <Modal
-        isOpen={!!inspectedItem}
-        onClose={() => setInspectedItem(null)}
-        title="Source Activity Reference & Payload"
-      >
-        {inspectedItem && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <SourceBadge source={inspectedItem.source} />
-                <span className="font-mono font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700 text-xs">
-                  {inspectedItem.referenceId}
-                </span>
-              </div>
-              <StatusBadge status={inspectedItem.status} />
-            </div>
 
-            <div>
-              <span className="text-xs text-slate-400 block font-semibold">TIMESTAMP: {inspectedItem.timestamp}</span>
-              <h3 className="text-base font-bold text-white mt-1">{inspectedItem.title}</h3>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">{inspectedItem.summary}</p>
-            </div>
+      {/* SOURCE / DATABASE STATUS */}
 
-            <div className="bg-[#090a0f] text-slate-200 p-4 rounded-xl font-mono text-xs overflow-x-auto border border-slate-800">
-              <pre>{JSON.stringify(inspectedItem.rawActivity || inspectedItem, null, 2)}</pre>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setInspectedItem(null)}
-                className="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-xl border border-slate-700"
-              >
-                Close Traceability Modal
-              </button>
-            </div>
+        <div className="bg-[#12141e] border border-slate-800 rounded-2xl p-5">
+
+          <div className="flex items-center gap-2">
+
+            <ShieldCheck className="w-5 h-5 text-emerald-400" />
+
+            <h3 className="text-sm font-bold text-white">
+              Traceability
+            </h3>
+
           </div>
-        )}
-      </Modal>
+
+          <p className="text-xs text-slate-400 mt-2">
+            Every generated item includes its source,
+            record ID and timestamp.
+          </p>
+
+        </div>
+
+
+        <div className="bg-[#12141e] border border-slate-800 rounded-2xl p-5">
+
+          <div className="flex items-center gap-2">
+
+            <Database className="w-5 h-5 text-slate-300" />
+
+            <h3 className="text-sm font-bold text-white">
+              PostgreSQL Analytics
+            </h3>
+
+          </div>
+
+          <p className="text-xs text-slate-400 mt-2">
+
+            {handover.database?.saved
+              ? `Saved successfully — Handover ID ${handover.database.handover_id}`
+              : 'Analytics database save unavailable'}
+
+          </p>
+
+        </div>
+
+      </div>
+
+
+      {/* FOUR REQUIRED SECTIONS */}
+
+      {renderSection(
+        'Completed',
+        sections.completed,
+        CheckCircle2
+      )}
+
+
+      {renderSection(
+        'In Progress',
+        sections.in_progress,
+        Clock3
+      )}
+
+
+      {renderSection(
+        'Blockers',
+        sections.blockers,
+        AlertTriangle
+      )}
+
+
+      {renderSection(
+        'Watch-list',
+        sections.watchlist,
+        Eye
+      )}
+
+
+      {/* FINGERPRINT */}
+
+      <div className="bg-[#12141e] border border-slate-800 rounded-2xl p-5">
+
+        <p className="text-xs text-slate-500 font-bold">
+          Reproducibility Fingerprint
+        </p>
+
+        <p className="text-xs font-mono text-slate-300 mt-2 break-all">
+          {handover.fingerprint || 'N/A'}
+        </p>
+
+      </div>
+
+    </div>
+  );
+}
+
+
+function MetricCard({
+  title,
+  value
+}) {
+  return (
+    <div className="bg-[#12141e] border border-slate-800 rounded-2xl p-5">
+
+      <p className="text-xs text-slate-500 font-bold">
+        {title}
+      </p>
+
+      <p className="text-2xl font-black text-white mt-2">
+        {value}
+      </p>
+
     </div>
   );
 }

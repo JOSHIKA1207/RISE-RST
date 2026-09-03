@@ -1,13 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.services.source_loader import load_all_sources
+from sqlalchemy import text
+
+from app.database import Base, engine, SessionLocal
+import app.models
 
 from app.routers.handover import router as handover_router
+
 
 app = FastAPI(
     title="Shift Handover Generator API",
     version="1.0.0"
 )
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -32,11 +40,28 @@ def health():
     return {
         "status": "healthy"
     }
-    
-@app.get("/api/source-health")
-def source_health():
-    _, health = load_all_sources()
 
-    return {
-        "sources": health
-    }
+
+@app.get("/api/database-health")
+def database_health():
+
+    db = SessionLocal()
+
+    try:
+        db.execute(text("SELECT 1"))
+
+        return {
+            "status": "connected",
+            "database": "PostgreSQL"
+        }
+
+    except Exception as e:
+
+        return {
+            "status": "unavailable",
+            "database": "PostgreSQL",
+            "error": str(e)
+        }
+
+    finally:
+        db.close()
