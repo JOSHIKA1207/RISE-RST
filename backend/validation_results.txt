@@ -1,0 +1,58 @@
+
+============================================================
+TEST 1 - Normal Busy Shift
+============================================================
+Shift: 2026-09-03T17:00:00+05:30 -> 2026-09-03T20:00:00+05:30
+Metrics: {'events_scanned': 7, 'events_in_window': 5, 'unique_records': 4, 'duplicates_removed': 1}
+Source Health: {'ticketing': 'connected', 'incidents': 'connected'}
+Fingerprint: 044350fe014277ca1fbcc96c252c15312204e7f5e41c8458e66fb7cd52fe20ad
+Sections: {'completed': 1, 'in_progress': 1, 'blockers': 1, 'watchlist': 1}
+RESULT: PASS
+
+============================================================
+TEST 2 - Reproducibility
+============================================================
+Shift: 2026-09-03T17:00:00+05:30 -> 2026-09-03T20:00:00+05:30
+Metrics: {'events_scanned': 7, 'events_in_window': 5, 'unique_records': 4, 'duplicates_removed': 1}
+Source Health: {'ticketing': 'connected', 'incidents': 'connected'}
+Fingerprint: 044350fe014277ca1fbcc96c252c15312204e7f5e41c8458e66fb7cd52fe20ad
+Sections: {'completed': 1, 'in_progress': 1, 'blockers': 1, 'watchlist': 1}
+RESULT: PASS
+
+REPRODUCIBILITY: PASS
+
+============================================================
+TEST 3 - Empty Shift
+============================================================
+Shift: 2026-09-04T01:00:00+05:30 -> 2026-09-04T02:00:00+05:30
+Metrics: {'events_scanned': 7, 'events_in_window': 0, 'unique_records': 0, 'duplicates_removed': 0}
+Source Health: {'ticketing': 'connected', 'incidents': 'connected'}
+Fingerprint: f352267d83ede6fc06bca4fba862416e2089fddaedffc407365a1d89b4150c4f
+Sections: {'completed': 0, 'in_progress': 0, 'blockers': 0, 'watchlist': 0}
+RESULT: PASS
+
+============================================================
+TEST 4 - Boundary Window
+============================================================
+Shift: 2026-09-03T17:45:00+05:30 -> 2026-09-03T19:10:00+05:30
+Metrics: {'events_scanned': 7, 'events_in_window': 3, 'unique_records': 3, 'duplicates_removed': 0}
+Source Health: {'ticketing': 'connected', 'incidents': 'connected'}
+Fingerprint: 6e5af301835561bebfaa33aa9abb06890e5e0a24bc8ee552ef6d149c9cc876d4
+Sections: {'completed': 1, 'in_progress': 1, 'blockers': 1, 'watchlist': 0}
+RESULT: PASS
+
+============================================================
+TEST 5 - Short Shift Window
+============================================================
+Shift: 2026-09-03T18:00:00+05:30 -> 2026-09-03T19:00:00+05:30
+Metrics: {'events_scanned': 7, 'events_in_window': 2, 'unique_records': 2, 'duplicates_removed': 0}
+Source Health: {'ticketing': 'connected', 'incidents': 'connected'}
+Fingerprint: 66947061a73b172d4f2584d20144034dcb983adb9bc34ef55550e4b1407d16b0
+Sections: {'completed': 1, 'in_progress': 0, 'blockers': 1, 'watchlist': 0}
+RESULT: PASS
+
+============================================================
+TEST 6 - Invalid Reversed Window
+============================================================
+RESULT: PASS
+Correctly rejected: shift_start must be earlier than shift_end
