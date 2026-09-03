@@ -1,58 +1,95 @@
+## Validation Results
 
-============================================================
-TEST 1 - Normal Busy Shift
-============================================================
-Shift: 2026-09-03T17:00:00+05:30 -> 2026-09-03T20:00:00+05:30
-Metrics: {'events_scanned': 7, 'events_in_window': 5, 'unique_records': 4, 'duplicates_removed': 1}
-Source Health: {'ticketing': 'connected', 'incidents': 'connected'}
-Fingerprint: 044350fe014277ca1fbcc96c252c15312204e7f5e41c8458e66fb7cd52fe20ad
-Sections: {'completed': 1, 'in_progress': 1, 'blockers': 1, 'watchlist': 1}
-RESULT: PASS
+### Test 1 — Normal Busy Shift
 
-============================================================
-TEST 2 - Reproducibility
-============================================================
-Shift: 2026-09-03T17:00:00+05:30 -> 2026-09-03T20:00:00+05:30
-Metrics: {'events_scanned': 7, 'events_in_window': 5, 'unique_records': 4, 'duplicates_removed': 1}
-Source Health: {'ticketing': 'connected', 'incidents': 'connected'}
-Fingerprint: 044350fe014277ca1fbcc96c252c15312204e7f5e41c8458e66fb7cd52fe20ad
-Sections: {'completed': 1, 'in_progress': 1, 'blockers': 1, 'watchlist': 1}
-RESULT: PASS
+Window:
 
-REPRODUCIBILITY: PASS
+`2026-09-03T17:00:00+05:30`
+to
+`2026-09-03T20:00:00+05:30`
 
-============================================================
-TEST 3 - Empty Shift
-============================================================
-Shift: 2026-09-04T01:00:00+05:30 -> 2026-09-04T02:00:00+05:30
-Metrics: {'events_scanned': 7, 'events_in_window': 0, 'unique_records': 0, 'duplicates_removed': 0}
-Source Health: {'ticketing': 'connected', 'incidents': 'connected'}
-Fingerprint: f352267d83ede6fc06bca4fba862416e2089fddaedffc407365a1d89b4150c4f
-Sections: {'completed': 0, 'in_progress': 0, 'blockers': 0, 'watchlist': 0}
-RESULT: PASS
+Observed:
+- Events scanned: 7
+- Events in window: 5
+- Unique records: 4
+- Duplicates removed: 1
+- Completed: 1
+- In Progress: 1
+- Blockers: 1
+- Watch-list: 1
 
-============================================================
-TEST 4 - Boundary Window
-============================================================
-Shift: 2026-09-03T17:45:00+05:30 -> 2026-09-03T19:10:00+05:30
-Metrics: {'events_scanned': 7, 'events_in_window': 3, 'unique_records': 3, 'duplicates_removed': 0}
-Source Health: {'ticketing': 'connected', 'incidents': 'connected'}
-Fingerprint: 6e5af301835561bebfaa33aa9abb06890e5e0a24bc8ee552ef6d149c9cc876d4
-Sections: {'completed': 1, 'in_progress': 1, 'blockers': 1, 'watchlist': 0}
-RESULT: PASS
+Result: PASS
 
-============================================================
-TEST 5 - Short Shift Window
-============================================================
-Shift: 2026-09-03T18:00:00+05:30 -> 2026-09-03T19:00:00+05:30
-Metrics: {'events_scanned': 7, 'events_in_window': 2, 'unique_records': 2, 'duplicates_removed': 0}
-Source Health: {'ticketing': 'connected', 'incidents': 'connected'}
-Fingerprint: 66947061a73b172d4f2584d20144034dcb983adb9bc34ef55550e4b1407d16b0
-Sections: {'completed': 1, 'in_progress': 0, 'blockers': 1, 'watchlist': 0}
-RESULT: PASS
+### Test 2 — Reproducibility
 
-============================================================
-TEST 6 - Invalid Reversed Window
-============================================================
-RESULT: PASS
-Correctly rejected: shift_start must be earlier than shift_end
+The same shift window was generated twice.
+
+Observed:
+- Same unique record count
+- Same section counts
+- Same SHA-256 fingerprint
+- No extra duplicate items introduced
+
+Result: PASS
+
+### Test 3 — Empty Shift
+
+Window:
+
+`2026-09-04T01:00:00+05:30`
+to
+`2026-09-04T02:00:00+05:30`
+
+Observed:
+- 0 events in window
+- All four sections empty
+- PDF generated successfully
+- Empty sections show "Nothing to report"
+
+Result: PASS
+
+### Test 4 — Boundary Window
+
+Window:
+
+`2026-09-03T17:45:00+05:30`
+to
+`2026-09-03T19:10:00+05:30`
+
+Rule used:
+
+`shift_start <= timestamp < shift_end`
+
+Observed:
+- Event exactly at shift start included
+- Event exactly at shift end excluded
+
+Result: PASS
+
+### Test 5 — Short Shift Window
+
+Window:
+
+`2026-09-03T18:00:00+05:30`
+to
+`2026-09-03T19:00:00+05:30`
+
+Observed:
+- Only records inside the selected period were included
+- Out-of-window records were excluded
+
+Result: PASS
+
+### Test 6 — Invalid Reversed Window
+
+Window:
+
+`2026-09-03T20:00:00+05:30`
+to
+`2026-09-03T17:00:00+05:30`
+
+Observed:
+- Request rejected
+- Error: `shift_start must be earlier than shift_end`
+
+Result: PASS

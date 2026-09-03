@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.services.source_loader import load_all_sources
 
 from app.routers.handover import router as handover_router
 
@@ -30,4 +31,12 @@ def root():
 def health():
     return {
         "status": "healthy"
+    }
+    
+@app.get("/api/source-health")
+def source_health():
+    _, health = load_all_sources()
+
+    return {
+        "sources": health
     }

@@ -55,3 +55,18 @@ def export_pdf():
         media_type="application/pdf",
         filename="shift_handover.pdf"
     )
+    
+    
+@router.post("/summary")
+def summary(request: GenerateRequest):
+    result = generate_handover(
+        request.shift_start,
+        request.shift_end
+    )
+
+    return {
+        "shift": result["shift"],
+        "metrics": result["metrics"],
+        "source_health": result["source_health"],
+        "fingerprint": result["fingerprint"]
+    }
